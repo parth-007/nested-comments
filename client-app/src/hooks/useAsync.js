@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 // Want to call this function automatically && immidiately
 export function useAsync(func, dependencies = []) {
     // state here is using rest operator and contains value: [isLoading, error, value];
-    const { execute, ...state } = useAsyncInternal(func, dependencies);
+    const { execute, ...state } = useAsyncInternal(func, dependencies, true);
 
     useEffect(() => {
         execute();
