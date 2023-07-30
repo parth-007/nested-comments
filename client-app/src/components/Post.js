@@ -1,7 +1,7 @@
 import { usePost } from "../context/PostContext"
 import { CommentList } from "./CommentList";
 
-export function Post(p) {
+export function Post() {
     const { post, rootComments } = usePost();
     return (
         <>
