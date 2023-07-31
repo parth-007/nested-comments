@@ -47,6 +47,12 @@ export function PostProvider({ children }) {
         })
     }
 
+    function deleteLocalComment(id) {
+        setComments(prevComments => {
+            return prevComments.filter(comment => comment.id !== id);
+        })
+    }
+
     useEffect(() => {
         if (post?.comments == null) return;
         setComments(post.comments);
@@ -60,6 +66,7 @@ export function PostProvider({ children }) {
                 getReplies,
                 createLocalComment,
                 updateLocalComment,
+                deleteLocalComment,
                 rootComments: commentsByParentId[null]
             }}
         >
