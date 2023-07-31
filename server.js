@@ -13,8 +13,8 @@ app.register(cookie, {
   secret: process.env.COOKIE_SECRET
 });
 app.register(cors, {
-    origin: process.env.CLIENT_URL,
-    credentials: true
+  origin: process.env.CLIENT_URL,
+  credentials: true
 })
 
 // Middleware
@@ -43,10 +43,10 @@ const COMMENT_SELECT_FIELDS = {
   parentId: true,
   createdAt: true,
   user: {
-      select: {
-          name: true,
-          id: true
-      }
+    select: {
+      name: true,
+      id: true
+    }
   }
 }
 
@@ -60,21 +60,21 @@ app.get("/posts", async (req, res) => {
 });
 
 app.get("/posts/:id", async (req, res) => {
-    return await commitToDb(prisma.post.findUnique({
-      where: {
-        id: req.params.id
-      },
-      select: {
-        body: true,
-        title: true,
-        comments: {
-            orderBy: {
-                createdAt: "desc"
-            },
-            select: COMMENT_SELECT_FIELDS
-        }
+  return await commitToDb(prisma.post.findUnique({
+    where: {
+      id: req.params.id
+    },
+    select: {
+      body: true,
+      title: true,
+      comments: {
+        orderBy: {
+          createdAt: "desc"
+        },
+        select: COMMENT_SELECT_FIELDS
       }
-    }));
+    }
+  }));
 });
 
 app.post("/posts/:id/comments", async (req, res) => {
@@ -95,10 +95,38 @@ app.post("/posts/:id/comments", async (req, res) => {
   )
 });
 
+app.put("/posts/:postId/comments/:commentId", async (req, res) => {
+  if (req.body.message === "" || req.body.message == null) {
+    return res.send(app.httpErrors.badRequest("Message is Required"));
+  }
+
+  // Only Edit the comments that you have made
+  const { userId } = await prisma.comment.findUnique(
+    {
+      where: { id: req.params.commentId },
+      select: { userId: true }
+    }
+  );
+
+  if (userId !== req.cookies.userId) {
+    res.send(app.httpErrors.badRequest("You do not have permissions to edit this message"));
+  }
+
+  return await commitToDb(prisma.comment.update({
+    where: {
+      id: req.params.commentId
+    },
+    data: {
+      message: req.body.message
+    },
+    select: { message: true }
+  }))
+});
+
 async function commitToDb(promise) {
-    const [error, data] = await app.to(promise);
-    if (error) return app.httpErrors.internalServerError(error.message);
-    return data;
+  const [error, data] = await app.to(promise);
+  if (error) return app.httpErrors.internalServerError(error.message);
+  return data;
 }
 
 app.listen({ port: process.env.PORT }, () => {
