@@ -1,17 +1,54 @@
 import dotenv from "dotenv";
 dotenv.config();
 import fastify from "fastify";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import sensible from "@fastify/sensible";
 import { PrismaClient } from "@prisma/client";
 
+
 const app = fastify();
 app.register(sensible);
+app.register(cookie, {
+  secret: process.env.COOKIE_SECRET
+});
 app.register(cors, {
     origin: process.env.CLIENT_URL,
     credentials: true
 })
+
+// Middleware
+// done is same as next
+app.addHook("onRequest", (req, res, done) => {
+  if (req.cookies.userId !== CURRENT_USER_ID) {
+    req.cookies.userId = CURRENT_USER_ID;
+    res.clearCookie("userId");
+    res.setCookie("userId", CURRENT_USER_ID);
+  }
+  done();
+});
 const prisma = new PrismaClient();
+
+
+// Fake Login [Says current user is Kyle]
+// const CURRENT_USER_ID = await prisma.user.findUnique({where: {name: "Kyle"}}).id;
+
+const CURRENT_USER_ID = (
+  await prisma.user.findFirst({ where: { name: "Kyle" } })
+).id
+
+const COMMENT_SELECT_FIELDS = {
+  id: true,
+  message: true,
+  parentId: true,
+  createdAt: true,
+  user: {
+      select: {
+          name: true,
+          id: true
+      }
+  }
+}
 
 app.get("/posts", async (req, res) => {
   return await commitToDb(prisma.post.findMany({
@@ -34,18 +71,7 @@ app.get("/posts/:id", async (req, res) => {
             orderBy: {
                 createdAt: "desc"
             },
-            select: {
-                id: true,
-                message: true,
-                parentId: true,
-                createdAt: true,
-                user: {
-                    select: {
-                        name: true,
-                        id: true
-                    }
-                }
-            }
+            select: COMMENT_SELECT_FIELDS
         }
       }
     }));
@@ -54,15 +80,17 @@ app.get("/posts/:id", async (req, res) => {
 app.post("/posts/:id/comments", async (req, res) => {
   if (req.body.message === "" || req.body.message == null) {
     return res.send(app.httpErrors.badRequest("Message is Required"));
-  }  
+  }
+  console.log(80, req.cookies);
   return await commitToDb(
     prisma.comment.create({
       data: {
         message: req.body.message,
         userId: req.cookies.userId, // Fake Cookie
         parentId: req.body.parentId,
-        postId: req.params.postId
-      }
+        postId: req.params.id
+      },
+      select: COMMENT_SELECT_FIELDS
     })
   )
 });
