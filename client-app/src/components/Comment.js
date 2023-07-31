@@ -1,4 +1,4 @@
-import {useState} from "react";
+import { useState } from "react";
 import { FaEdit, FaHeart, FaReply, FaTrash } from "react-icons/fa";
 
 import { usePost } from "../context/PostContext";
@@ -12,7 +12,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short"
 });
-export function Comment({id, message, user, createdAt}) {
+export function Comment({ id, message, user, createdAt }) {
     const { post, getReplies, createLocalComment, updateLocalComment, deleteLocalComment } = usePost();
     const childComments = getReplies(id);
     const [areChildrenHidden, setAreChildrenHidden] = useState(false);
@@ -48,21 +48,25 @@ export function Comment({id, message, user, createdAt}) {
                     <span className="name">{user.name}</span>
                     <span className="date">{dateFormatter.format(Date.parse(createdAt))}</span>
                 </div>
-                {isEditing ? <CommentForm autoFocus initialValue={message} onSubmit={onCommentUpdate} loading={updateCommentFn.loading} error={updateCommentFn.error}/> :<div className="message">{message}</div> }
-                
+                {isEditing ? <CommentForm autoFocus initialValue={message} onSubmit={onCommentUpdate} loading={updateCommentFn.loading} error={updateCommentFn.error} /> : <div className="message">{message}</div>}
                 <div className="footer">
-                    <IconBtn Icon={FaHeart} aria-label="Like"> 
+                    <IconBtn Icon={FaHeart} aria-label="Like">
                         2
                     </IconBtn>
-                    <IconBtn Icon={FaReply} onClick={() => setIsReplying(prev => !prev)} isActive={isReplying} aria-label={isReplying ? `Cancel Reply` : `Reply`} /> 
-                    <IconBtn Icon={FaEdit}  onClick={() => setIsEditing(prev => !prev)} isActive={isEditing} aria-label={isEditing ? `Cancel Edit` : `Edit`} /> 
-                    <IconBtn Icon={FaTrash} onClick={onCommentDelete} disabled={deleteCommentFn.loading} aria-label="Trash" color="danger"/> 
+                    <IconBtn Icon={FaReply} onClick={() => setIsReplying(prev => !prev)} isActive={isReplying} aria-label={isReplying ? `Cancel Reply` : `Reply`} />
+                    <IconBtn Icon={FaEdit} onClick={() => setIsEditing(prev => !prev)} isActive={isEditing} aria-label={isEditing ? `Cancel Edit` : `Edit`} />
+                    <IconBtn Icon={FaTrash} onClick={onCommentDelete} disabled={deleteCommentFn.loading} aria-label="Trash" color="danger" />
                 </div>
+                {deleteCommentFn.error && (
+                    <div className="error-msg mt-1">
+                        {deleteCommentFn.error}
+                    </div>
+                )}
             </div>
 
             {isReplying && (
                 <div className="mt-1 ml-3">
-                    <CommentForm autoFocus onSubmit={onCommentReply} loading={createCommentFn.loading} error={createCommentFn.error}/>
+                    <CommentForm autoFocus onSubmit={onCommentReply} loading={createCommentFn.loading} error={createCommentFn.error} />
                 </div>
             )}
             {childComments && childComments.length > 0 && (
