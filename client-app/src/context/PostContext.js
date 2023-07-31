@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useAsync } from "../hooks/useAsync";
@@ -14,22 +14,30 @@ export function PostProvider({ children }) {
     const { id } = useParams();
     const { isLoading, error, value: post } = useAsync(() => getPost(id), [id]);
 
-    const commentsByParentId = useMemo(() => {
+    const [comments, setComments] = useState([]);
 
-        if (post?.comments == null) {
-            return [];
-        }
+    const commentsByParentId = useMemo(() => {
         const group = {};
-        post.comments.forEach(comment => {
+        comments.forEach(comment => {
             group[comment.parentId] ||= [];
             group[comment.parentId].push(comment);
         })
 
         return group;
-    }, [post?.comments]);
+    }, [comments]);
 
     console.log(commentsByParentId);
 
+    function createLocalComment(comment) {
+        setComments(prevComments => {
+            return [comment, ...prevComments, ]
+        })
+    }
+
+    useEffect(() => {
+        if (post?.comments == null) return;
+        setComments(post.comments);
+    }, [post?.comments]);
     const getReplies = (parentId) => commentsByParentId[parentId];
 
     return (
@@ -37,6 +45,7 @@ export function PostProvider({ children }) {
             value={{
                 post: { ...post, id }, 
                 getReplies,
+                createLocalComment,
                 rootComments: commentsByParentId[null]
             }}
         >
