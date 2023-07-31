@@ -3,6 +3,7 @@ import { FaEdit, FaHeart, FaReply, FaTrash } from "react-icons/fa";
 
 import { usePost } from "../context/PostContext";
 import { useAsyncFn } from "../hooks/useAsync";
+import { useUser } from "../hooks/useUser";
 import { createComment, deleteComment, updateComment } from "../services/comments";
 import { CommentForm } from "./CommentForm";
 import { CommentList } from "./CommentList";
@@ -22,6 +23,8 @@ export function Comment({ id, message, user, createdAt }) {
     const createCommentFn = useAsyncFn(createComment);
     const updateCommentFn = useAsyncFn(updateComment);
     const deleteCommentFn = useAsyncFn(deleteComment);
+
+    const currentUser = useUser();
 
     const onCommentReply = (message) => {
         return createCommentFn.execute({ postId: post.id, message, parentId: id }).then(comment => {
@@ -54,8 +57,15 @@ export function Comment({ id, message, user, createdAt }) {
                         2
                     </IconBtn>
                     <IconBtn Icon={FaReply} onClick={() => setIsReplying(prev => !prev)} isActive={isReplying} aria-label={isReplying ? `Cancel Reply` : `Reply`} />
-                    <IconBtn Icon={FaEdit} onClick={() => setIsEditing(prev => !prev)} isActive={isEditing} aria-label={isEditing ? `Cancel Edit` : `Edit`} />
-                    <IconBtn Icon={FaTrash} onClick={onCommentDelete} disabled={deleteCommentFn.loading} aria-label="Trash" color="danger" />
+                    {
+                        user.id === currentUser.id && (
+                            <>
+                                <IconBtn Icon={FaEdit} onClick={() => setIsEditing(prev => !prev)} isActive={isEditing} aria-label={isEditing ? `Cancel Edit` : `Edit`} />
+                                <IconBtn Icon={FaTrash} onClick={onCommentDelete} disabled={deleteCommentFn.loading} aria-label="Trash" color="danger" />
+                            </>
+                        )
+                    }
+
                 </div>
                 {deleteCommentFn.error && (
                     <div className="error-msg mt-1">
