@@ -49,7 +49,23 @@ app.get("/posts/:id", async (req, res) => {
         }
       }
     }));
-  });
+});
+
+app.post("/posts/:id/comments", async (req, res) => {
+  if (req.body.message === "" || req.body.message == null) {
+    return res.send(app.httpErrors.badRequest("Message is Required"));
+  }  
+  return await commitToDb(
+    prisma.comment.create({
+      data: {
+        message: req.body.message,
+        userId: req.cookies.userId, // Fake Cookie
+        parentId: req.body.parentId,
+        postId: req.params.postId
+      }
+    })
+  )
+});
 
 async function commitToDb(promise) {
     const [error, data] = await app.to(promise);
