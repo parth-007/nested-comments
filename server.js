@@ -60,21 +60,47 @@ app.get("/posts", async (req, res) => {
 });
 
 app.get("/posts/:id", async (req, res) => {
-  return await commitToDb(prisma.post.findUnique({
-    where: {
-      id: req.params.id
-    },
-    select: {
-      body: true,
-      title: true,
-      comments: {
-        orderBy: {
-          createdAt: "desc"
-        },
-        select: COMMENT_SELECT_FIELDS
+  return await commitToDb(
+    prisma.post.findUnique({
+      where: {
+        id: req.params.id
+      },
+      select: {
+        body: true,
+        title: true,
+        comments: {
+          orderBy: {
+            createdAt: "desc"
+          },
+          select: {
+            ...COMMENT_SELECT_FIELDS,
+            _count: { select: { likes: true } }
+          }
+        }
       }
-    }
-  }));
+    }).then(async post => {
+      const likes = await prisma.like.findMany({
+        where: {
+          userId: req.cookies.userId,
+          commentId: {
+            in: post.comments.map(comment => comment.id)
+          }
+        }
+      });
+
+      return {
+        ...post,
+        comments: post.comments.map(comment => {
+          const {_count, ...commentFields} = comment;
+          return {
+            ...commentFields,
+            likedByMe: likes.find(like => like.commentId === comment.id),
+            likeCount: _count.likes
+          }
+        })
+      }
+    })
+    );
 });
 
 app.post("/posts/:id/comments", async (req, res) => {
