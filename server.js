@@ -118,6 +118,13 @@ app.post("/posts/:id/comments", async (req, res) => {
       },
       select: COMMENT_SELECT_FIELDS
     })
+    .then(comment => {
+      return {
+        ...comment,
+        likeCount: 0,
+        likedByMe: false
+      }
+    })
   )
 });
 

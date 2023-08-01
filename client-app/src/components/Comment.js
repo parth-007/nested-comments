@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaEdit, FaHeart, FaReply, FaTrash } from "react-icons/fa";
+import { FaEdit, FaHeart, FaRegHeart, FaReply, FaTrash } from "react-icons/fa";
 
 import { usePost } from "../context/PostContext";
 import { useAsyncFn } from "../hooks/useAsync";
@@ -13,7 +13,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short"
 });
-export function Comment({ id, message, user, createdAt }) {
+export function Comment({ id, message, user, createdAt, likeCount, likedByMe }) {
     const { post, getReplies, createLocalComment, updateLocalComment, deleteLocalComment } = usePost();
     const childComments = getReplies(id);
     const [areChildrenHidden, setAreChildrenHidden] = useState(false);
@@ -52,9 +52,9 @@ export function Comment({ id, message, user, createdAt }) {
                     <span className="date">{dateFormatter.format(Date.parse(createdAt))}</span>
                 </div>
                 {isEditing ? <CommentForm autoFocus initialValue={message} onSubmit={onCommentUpdate} loading={updateCommentFn.loading} error={updateCommentFn.error} /> : <div className="message">{message}</div>}
-                <div className="footer">
-                    <IconBtn Icon={FaHeart} aria-label="Like">
-                        2
+                <div className="footer"> 
+                    <IconBtn Icon={likedByMe ? FaHeart : FaRegHeart} aria-label={`${likedByMe ? 'Unlike'  : 'Like'}`}>
+                        {likeCount}
                     </IconBtn>
                     <IconBtn Icon={FaReply} onClick={() => setIsReplying(prev => !prev)} isActive={isReplying} aria-label={isReplying ? `Cancel Reply` : `Reply`} />
                     {
