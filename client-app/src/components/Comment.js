@@ -4,7 +4,7 @@ import { FaEdit, FaHeart, FaRegHeart, FaReply, FaTrash } from "react-icons/fa";
 import { usePost } from "../context/PostContext";
 import { useAsyncFn } from "../hooks/useAsync";
 import { useUser } from "../hooks/useUser";
-import { createComment, deleteComment, updateComment } from "../services/comments";
+import { createComment, deleteComment, toggleCommentLike, updateComment } from "../services/comments";
 import { CommentForm } from "./CommentForm";
 import { CommentList } from "./CommentList";
 import { IconBtn } from "./IconBtn";
@@ -14,7 +14,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
     timeStyle: "short"
 });
 export function Comment({ id, message, user, createdAt, likeCount, likedByMe }) {
-    const { post, getReplies, createLocalComment, updateLocalComment, deleteLocalComment } = usePost();
+    const { post, getReplies, createLocalComment, updateLocalComment, deleteLocalComment, toggleLocalCommentLike } = usePost();
     const childComments = getReplies(id);
     const [areChildrenHidden, setAreChildrenHidden] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
@@ -23,6 +23,7 @@ export function Comment({ id, message, user, createdAt, likeCount, likedByMe }) 
     const createCommentFn = useAsyncFn(createComment);
     const updateCommentFn = useAsyncFn(updateComment);
     const deleteCommentFn = useAsyncFn(deleteComment);
+    const toggleCommentLikeFn = useAsyncFn(toggleCommentLike);
 
     const currentUser = useUser();
 
@@ -37,12 +38,16 @@ export function Comment({ id, message, user, createdAt, likeCount, likedByMe }) 
         return updateCommentFn.execute({ postId: post.id, message, id }).then(comment => {
             setIsEditing(false);
             console.log(comment);
-            deleteLocalComment(id);
+            updateLocalComment(id, comment.message);
         });
     }
 
     const onCommentDelete = () => {
         return deleteCommentFn.execute({ postId: post.id, id }).then((comment) => deleteLocalComment(comment.id));
+    }
+
+    const onToggleCommentLike = () => {
+        return toggleCommentLikeFn.execute({ id, postId: post.id }).then(({addLike}) => toggleLocalCommentLike(id, addLike));
     }
     return (
         <>
@@ -53,7 +58,7 @@ export function Comment({ id, message, user, createdAt, likeCount, likedByMe }) 
                 </div>
                 {isEditing ? <CommentForm autoFocus initialValue={message} onSubmit={onCommentUpdate} loading={updateCommentFn.loading} error={updateCommentFn.error} /> : <div className="message">{message}</div>}
                 <div className="footer"> 
-                    <IconBtn Icon={likedByMe ? FaHeart : FaRegHeart} aria-label={`${likedByMe ? 'Unlike'  : 'Like'}`}>
+                    <IconBtn Icon={likedByMe ? FaHeart : FaRegHeart} onClick={onToggleCommentLike} disabled={toggleCommentLikeFn.loading} aria-label={`${likedByMe ? 'Unlike'  : 'Like'}`}>
                         {likeCount}
                     </IconBtn>
                     <IconBtn Icon={FaReply} onClick={() => setIsReplying(prev => !prev)} isActive={isReplying} aria-label={isReplying ? `Cancel Reply` : `Reply`} />

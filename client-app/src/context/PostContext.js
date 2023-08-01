@@ -53,6 +53,32 @@ export function PostProvider({ children }) {
         })
     }
 
+    function toggleLocalCommentLike(id, addLike) {
+        setComments(prevComments => {
+            return prevComments.map(comment => {
+                if (comment.id === id ){
+                    if (addLike) {
+                        return {
+                            ...comment,
+                            likeCount: comment.likeCount + 1,
+                            likedByMe: true
+                        }
+                    }
+                    else {
+                        return {
+                            ...comment,
+                            likeCount: comment.likeCount - 1,
+                            likedByMe: false
+                        }
+                    }
+                }
+                else {
+                    return comment;
+                }
+            })
+        })
+    }
+
     useEffect(() => {
         if (post?.comments == null) return;
         setComments(post.comments);
@@ -67,6 +93,7 @@ export function PostProvider({ children }) {
                 createLocalComment,
                 updateLocalComment,
                 deleteLocalComment,
+                toggleLocalCommentLike,
                 rootComments: commentsByParentId[null]
             }}
         >
